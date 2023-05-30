@@ -16,12 +16,6 @@ from openai import OpenAIError
 import streamlit as st
 import tempfile
 
-
-# Get your API keys from openai, you will need to create an account. 
-# Here is the link to get the keys: https://platform.openai.com/account/billing/overview
-# os.environ["OPENAI_API_KEY"] = "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"
-
-
 def pdf_to_text(reader, chunk_size = 3):
     # read data from the file and put them into a variable called raw_text
     raw_text = ''
