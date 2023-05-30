@@ -54,7 +54,7 @@ default_queries = [
     "What is the time span of this dataset?",
     # "What sampling methods were used to select the study participants?",
     # "What do you think of the appropriateness of the sampling methods?",
-    "What were the four key outcome measures (dependent variables) of the study?",
+    "What were the outcome measures (dependent variables) of the study?",
     "How were they measured? What were the scales of measurement?",
     "What independent/confounding variables were collected to investigate their relationships with the key outcome measures?",
     "What statistical tests were used to investigate the relationships?",
@@ -103,8 +103,8 @@ if uploaded_file is not None:
         chat_history = []  # If the file does not exist, start with an empty chat history
 
     # 2. Chat interface
-    st.subheader('Chatbot')
-    user_input = st.selectbox("Select a default question or type your own:", [""] + default_queries, key='user_input')
+    st.subheader('Please select a question or type your own question.')
+    user_input = st.selectbox("Select a default question:", [""] + default_queries, key='user_input')
     user_input = st.text_input("Or type your own question:", value=user_input, key='custom_input')
 
     if st.button("Send"):
