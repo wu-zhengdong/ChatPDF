@@ -1,20 +1,15 @@
 import os
-from itertools import chain
-from pyexpat import model
 from datetime import datetime
-import queue
 import pandas as pd
 from PyPDF2 import PdfReader
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import ElasticVectorSearch, Pinecone, Weaviate, FAISS
+from langchain.vectorstores import FAISS
 from langchain.chains.question_answering import load_qa_chain
-# from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from openai import OpenAIError
 
 import streamlit as st
-import tempfile
 
 def pdf_to_text(reader, chunk_size = 3):
     # read data from the file and put them into a variable called raw_text
