@@ -40,7 +40,7 @@ if not api_key:
 os.environ["OPENAI_API_KEY"] = api_key
 
 # Default parameters
-k = 6
+k = 8
 model_name = "gpt-4"
 chunk_size = 1000
 chunk_overlap = 200
@@ -51,8 +51,9 @@ default_queries = [
     "What were the objectives of the study?",
     "What was the study design?",
     "How and when the data were collected?",
-    "What sampling methods were used to select the study participants?",
-    "What do you think of the appropriateness of the sampling methods?",
+    "What is the time span of this dataset?",
+    # "What sampling methods were used to select the study participants?",
+    # "What do you think of the appropriateness of the sampling methods?",
     "What were the four key outcome measures (dependent variables) of the study?",
     "How were they measured? What were the scales of measurement?",
     "What independent/confounding variables were collected to investigate their relationships with the key outcome measures?",
@@ -127,10 +128,11 @@ if uploaded_file is not None:
             st.write(f"ChatPDF: {r}")
 
     # Export Button
+    st.write('Click **Export** to export the chat history.')
     if st.button("Export"):
         with open(chat_history_filename, "rb") as file:
             btn = st.download_button(
-                label="Download Chat History",
+                label="Download chat history",
                 data=file,
                 file_name=chat_history_filename,
                 mime='application/vnd.ms-excel',
