@@ -5,3 +5,4 @@ pdfminer.six==20221105
 PyPDF2==3.0.1
 streamlit==1.19.0
 tiktoken==0.2.0
+faiss-cpu
