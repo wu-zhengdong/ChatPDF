@@ -1,7 +1,9 @@
 import os
+from itertools import chain
+from pyexpat import model
 from datetime import datetime
+import queue
 import pandas as pd
-from PyPDF2 import PdfReader
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
@@ -10,27 +12,12 @@ from langchain.chat_models import ChatOpenAI
 from openai import OpenAIError
 
 import streamlit as st
+import tempfile
+from pdfminer.high_level import extract_text
 
-def pdf_to_text(reader, chunk_size = 3):
-    # read data from the file and put them into a variable called raw_text
-    raw_text = ''
-    raw_text_list = []
-
-    for j, page in enumerate(reader.pages):
-        text = page.extract_text()
-        
-        if text:
-            part_length = len(text) // chunk_size
-
-            for i in range(chunk_size):
-                start = i * part_length
-                end = (i + 1) * part_length
-                part = text[start:end]
-
-                raw_text += part
-                raw_text_list.append(part)
-
-    return raw_text
+def read_pdf(file):
+    text = extract_text(file)
+    return text
 
 def get_response(docs, query, model_name='gpt-4', chain_type="stuff"):
 
@@ -81,8 +68,11 @@ uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 # If a PDF has been uploaded
 if uploaded_file is not None:
     # read PDF and convert to raw text
-    reader = PdfReader(uploaded_file)
-    raw_text = pdf_to_text(reader)
+    # Save uploaded file to a temporary file, then read it
+    tfile = tempfile.NamedTemporaryFile(delete=False)
+    tfile.write(uploaded_file.read())
+    raw_text = read_pdf(tfile.name)
+    tfile.close()
 
     # We need to split the text that we read into smaller chunks so that during information retreival we don't hit the token size limits. 
     text_splitter = CharacterTextSplitter(        
