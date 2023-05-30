@@ -17,7 +17,7 @@ def read_pdf(file):
     text = extract_text(file)
     return text
 
-def get_response(docs, query, model_name='gpt-4', chain_type="stuff"):
+def get_response(docs, query, model_name, chain_type="stuff"):
 
     llm = ChatOpenAI(temperature=0.1, model_name=model_name, max_tokens=500)
     chain = load_qa_chain(llm, chain_type=chain_type)
@@ -40,10 +40,10 @@ if not api_key:
 os.environ["OPENAI_API_KEY"] = api_key
 
 # Default parameters
-k = 8
-model_name = "gpt-4"
 chunk_size = 1000
 chunk_overlap = 200
+k = st.selectbox("Choose a larger number to expand your search and retrieve more information.", options=[6, 8, 12, 16], index=0)
+model_name = st.selectbox("Choose a model", options=["gpt-4", "gpt-3.5-turbo"], index=0)
 
 # Default queries
 default_queries = [
@@ -109,7 +109,7 @@ if uploaded_file is not None:
 
     if st.button("Send"):
         if user_input.strip() != "":
-            with st.spinner('Generating response...(Please wait 10 to 20 seconds)'):
+            with st.spinner('Generating response...(Please wait around 10 to 30 seconds)'):
                 docs = docsearch.similarity_search(user_input, k=k)
                 response = get_response(docs, query=user_input, model_name=model_name)
             # Save the query and response
