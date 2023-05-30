@@ -1,15 +1,17 @@
 import os
-from datetime import datetime
+import tempfile
 import pandas as pd
+import streamlit as st
+from datetime import datetime
+from openai import OpenAIError
+from pdfminer.high_level import extract_text
+
+from langchain.chat_models import ChatOpenAI
+from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import FAISS
 from langchain.chains.question_answering import load_qa_chain
-from langchain.chat_models import ChatOpenAI
-from openai import OpenAIError
-import streamlit as st
-import tempfile
-from pdfminer.high_level import extract_text
+
 
 def read_pdf(file):
     text = extract_text(file)
@@ -38,7 +40,7 @@ if not api_key:
 os.environ["OPENAI_API_KEY"] = api_key
 
 # Default parameters
-k = 12
+k = 6
 model_name = "gpt-4"
 chunk_size = 1000
 chunk_overlap = 200
@@ -106,7 +108,7 @@ if uploaded_file is not None:
 
     if st.button("Send"):
         if user_input.strip() != "":
-            with st.spinner('Generating response...'):
+            with st.spinner('Generating response...(Please wait 10 to 20 seconds)'):
                 docs = docsearch.similarity_search(user_input, k=k)
                 response = get_response(docs, query=user_input, model_name=model_name)
             # Save the query and response
