@@ -119,7 +119,7 @@ st.subheader('2. Please choose the parameters, model, and upload the PDF file.')
 # Default parameters
 chunk_size = 1000
 chunk_overlap = 200
-k = st.selectbox("Choose a larger number to expand your search and retrieve more information.", options=[4, 6, 8, 12], index=0)
+k = st.selectbox("Choose a larger number to expand your search and retrieve more information.", options=[4, 6, 8, 12, 16], index=1)
 model_name = st.selectbox("Choose a model", options=["gpt-4", "gpt-3.5-turbo"], index=0)
 
 # Default queries
