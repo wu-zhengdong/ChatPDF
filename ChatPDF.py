@@ -1,3 +1,6 @@
+'''
+With database
+'''
 import os
 import tempfile
 import pandas as pd
@@ -12,6 +15,27 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chains.question_answering import load_qa_chain
 
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from datetime import datetime
+
+# Function to update the Google sheet
+def update_google_sheet(database_name_email, query, response):
+    # Get the current date and time
+    now = datetime.now()
+    current_time = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Try to open the spreadsheet
+    try:
+        sheet = client.open(database_name_email)
+    except gspread.SpreadsheetNotFound:
+        st.warning(f"No existing Google Sheet found with the name '{database_name_email}'.")
+        st.stop()
+
+    # Select the first worksheet in the spreadsheet
+    worksheet = sheet.get_worksheet(0)
+    # Then append the row to the selected worksheet
+    worksheet.append_row([query, response, current_time])
 
 def read_pdf(file):
     text = extract_text(file)
@@ -39,10 +63,63 @@ if not api_key:
 # Set the API Key as an environment variable
 os.environ["OPENAI_API_KEY"] = api_key
 
+# Connect to Google Sheets
+scope = ['https://www.googleapis.com/auth/spreadsheets',
+         "https://www.googleapis.com/auth/drive"]
+
+credentials = ServiceAccountCredentials.from_json_keyfile_name("chatpdf-388607-557f6bf3d25a.json", scope)
+client = gspread.authorize(credentials)
+
+st.subheader('1. Please provide the Gmail address and spreadsheet name.')
+# Get the email and spreadsheet name from the user
+user_email = st.text_input("Please enter your Gmail address", value="")
+
+# Validate the inputs
+if not user_email.endswith("@gmail.com"):
+    st.warning("Please enter a valid Gmail address.")
+    # st.stop()
+
+database_name = st.text_input("Please enter your spreadsheet name", value="")
+
+# Combine the spreadsheet name and email to create a unique name
+database_name_email = "{}_{}".format(database_name, user_email.split("@")[0])
+
+create_new_sheet = st.checkbox("Create a new Google Sheet?", value=True)
+
+# If user chose to create a new sheet
+if create_new_sheet:
+    if st.button("Create and Send Google Sheet"):
+        try:
+            # Create a new sheet and share to user's Google excel
+            sheet = client.create(database_name_email)
+            sheet.share(user_email, perm_type='user', role='writer')
+            
+            # Select the first worksheet in the spreadsheet
+            worksheet = sheet.get_worksheet(0)
+
+            # Check if the headers are already there, if not, create them
+            headers = worksheet.row_values(1)
+            if not headers:
+                worksheet.append_row(["query", "response", "time"])
+
+            st.warning(f"{database_name_email} sheet created and linked successfully!")
+        except Exception as e:
+            st.error(f"Could not create a new Google Sheet: {str(e)}")
+            st.stop()
+else:
+    if st.button("Please press this button to verify the existence of the Google Sheet."):
+        try:
+            sheet = client.open(database_name_email)
+            st.warning(f"Your Google Drive hosts the {database_name_email} sheet. Connection successful!")
+        except gspread.SpreadsheetNotFound:
+            st.warning(f"No existing Google Sheet found with the name '{database_name_email}'.")
+            st.stop()
+
+st.subheader('2. Please choose the parameters, model, and upload the PDF file.')
 # Default parameters
 chunk_size = 1000
 chunk_overlap = 200
-k = st.selectbox("Choose a larger number to expand your search and retrieve more information.", options=[6, 8, 12, 16], index=0)
+k = st.selectbox("Choose a larger number to expand your search and retrieve more information.", options=[4, 6, 8, 12], index=0)
 model_name = st.selectbox("Choose a model", options=["gpt-4", "gpt-3.5-turbo"], index=0)
 
 # Default queries
@@ -103,7 +180,7 @@ if uploaded_file is not None:
         chat_history = []  # If the file does not exist, start with an empty chat history
 
     # 2. Chat interface
-    st.subheader('Please select a question or type your own question.')
+    st.subheader('3. Please select a question or type your own question.')
     user_input = st.selectbox("Select a default question:", [""] + default_queries, key='user_input')
     user_input = st.text_input("Or type your own question:", value=user_input, key='custom_input')
 
@@ -112,6 +189,7 @@ if uploaded_file is not None:
             with st.spinner('Generating response...(Please wait around 10 to 30 seconds)'):
                 docs = docsearch.similarity_search(user_input, k=k)
                 response = get_response(docs, query=user_input, model_name=model_name)
+                update_google_sheet(database_name_email, user_input, response)
             # Save the query and response
             chat_history.insert(0, [user_input, response])
             pd.DataFrame(chat_history, columns=['Query', 'Response']).to_excel(chat_history_filename, index=False)
@@ -128,8 +206,8 @@ if uploaded_file is not None:
             st.write(f"ChatPDF: {r}")
 
     # Export Button
-    st.write('Click **Export** to export the chat history.')
-    if st.button("Export"):
+    st.write('**You can also click ***EXPORT*** to save the chat history to your local PC.**')
+    if st.button("EXPORT"):
         with open(chat_history_filename, "rb") as file:
             btn = st.download_button(
                 label="Download chat history",
